@@ -1,13 +1,32 @@
 ## Final Code 
 
 ```python
-# This section describes the process of appending content to a markdown file using Python.
-# It involves opening a file in append mode and writing formatted content to it.
+# Import the BaseModel class from the Pydantic library
+from pydantic import BaseModel
 
-with open("test_output.md", "a", encoding="utf-8") as file:
-    # Appends "## Final Code" followed by the content of the response to the file.
-    # The content is assumed to come from a response object, which is not defined here.
-    file.write("## Final Code \n\n" + response.content + "\n")
-``` 
+# Define a class named CodingAssistance that inherits from the Pydantic BaseModel
+# This class is designed to manage data related to coding assistance
+class CodingAssistance(BaseModel):
+    """
+    The CodingAssistance class represents and manages data related to coding assistance.
+    It includes attributes for a thread identifier, an initial input, an optional update message,
+    and documentation associated with the coding assistance. added everything
+    """
+    thread_id: str 
+    initial_input: str  # The initial input or question that requires assistance
+    update: str = "koti"  # An optional field for providing updates; defaults to "koti"
+    documentation: str  # Documentation or additional information related to the coding assistance
 
-This block of code opens a file named `test_output.md` in append mode (`"a"`), ensuring it doesn't overwrite the existing content. It then writes a formatted string to the file, which includes a markdown header "## Final Code" followed by the content of a response object. The encoding is set to "utf-8" to support a wide range of characters.
+# Creating an instance of the CodingAssistance class with specific attributes
+instance = CodingAssistance(thread_id='1', initial_input='test', documentation='doc')
+
+# Iterate over the fields of the instance and print their values if they are not None
+# This loop helps in displaying the data stored in the instance
+for field in instance.__fields__.keys():
+    # Get the value of the current field
+    value = getattr(instance, field)
+    # Check if the value is not None
+    if value is not None:
+        # Print the value
+        print(value)
+```

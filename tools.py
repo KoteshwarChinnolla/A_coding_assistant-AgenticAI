@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import MessagesState
-from states import State
-from states import WorkerState
-from states import Sections
+from AI_coding_assistence.states import State
+from AI_coding_assistence.states import WorkerState
+from AI_coding_assistence.states import Sections
 from langchain_groq import ChatGroq
 
 State=State

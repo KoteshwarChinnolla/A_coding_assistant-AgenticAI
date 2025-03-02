@@ -11,11 +11,11 @@ from langchain_core.messages import HumanMessage,SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import MessagesState
 # from states import State
-from states import Section
-from states import Sections
-from states import WorkerState
+from AI_coding_assistence.states import Section
+from AI_coding_assistence.states import Sections
+from AI_coding_assistence.states import WorkerState
 from langchain_groq import ChatGroq
-from tools import tools
+from AI_coding_assistence.tools import tools
 
 
 llm = ChatGroq(model="qwen-2.5-32b")
@@ -95,3 +95,27 @@ class coding_assistance:
     def graph(self):
         return self.chain
 
+    def response(self,chat_request):
+
+        thread_id=chat_request["thread_id"]
+        thread={"configurable":{"thread_id":thread_id}}
+        request={}
+        for i in chat_request.keys():
+            if(chat_request[i]!="None"):
+                request[i]=chat_request[i]
+
+        if  len(request.keys())==2:
+            initial_input=request["initial_input"]
+            for event in self.chain.stream({"user_prompt":initial_input},thread,stream_mode="values"):
+                print("")
+
+        elif len(request.keys())==3:
+
+            update=request["update"]
+            for event in self.chain.stream(None if update.lower() == "yes" or update.lower() == "y" or update.lower() == "ok"  else {"user_prompt":update}, thread, stream_mode="values"):
+                print("")
+
+        else:
+            update=request["documentation"]
+            for event in self.chain.stream(None if update.lower() == "yes" or update.lower() == "y" or update.lower() == "ok"  else {"stop":"stop"}, thread, stream_mode="values"):
+                print("")
