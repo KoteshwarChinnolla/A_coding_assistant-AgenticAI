@@ -17,5 +17,5 @@ Humen feedback steps:
 > Ask for improvisation in the code.
 
 
- ## **lANGGRAPH WORKFLOW**
+ ## **LANGGRAPH WORKFLOW**
  ![Work flow](https://github.com/KoteshwarChinnolla/A_coding_assistant-AgenticAI/blob/main/output.png)
