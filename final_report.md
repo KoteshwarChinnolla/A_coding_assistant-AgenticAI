@@ -25,7 +25,6 @@ instance = CodingAssistance(thread_id='1', initial_input='test', documentation='
 for field in instance.__fields__.keys():
     # Get the value of the current field
     value = getattr(instance, field)
-    # Check if the value is not None
     if value is not None:
         # Print the value
         print(value)

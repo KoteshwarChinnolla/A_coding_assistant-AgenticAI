@@ -1,6 +1,5 @@
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
-from IPython.display import Image, display
 from typing import Annotated, List
 import operator
 from pydantic import BaseModel, Field
@@ -23,9 +22,16 @@ class Section(BaseModel):
     description: str = Field(
         description="Brief overview of the main topics and concepts to be covered in this section.",
     )
-    code: str = Field(
+    session_code: str = Field(
         description="code related to this section",
     )
+    problem_statement: str = Field(
+        description="problem statement to write report on",
+    )
+    full_code: str = Field(
+        description="Entire code to write report on",
+    )
+
 
 
 class Sections(BaseModel):
@@ -62,3 +68,4 @@ class State(TypedDict):
         list, operator.add
     ]  
     final_report: str
+    times_visit: int

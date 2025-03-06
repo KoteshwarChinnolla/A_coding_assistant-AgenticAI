@@ -1,6 +1,5 @@
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph,START,END
-from IPython.display import Image,display
 from typing import Annotated,List
 import operator
 from pydantic import BaseModel,Field
@@ -11,6 +10,7 @@ from langchain_core.messages import HumanMessage,SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import MessagesState
 # from states import State
+from AI_coding_assistence.states import State
 from AI_coding_assistence.states import Section
 from AI_coding_assistence.states import Sections
 from AI_coding_assistence.states import WorkerState
@@ -45,14 +45,18 @@ class State(TypedDict):
     ]  
     final_report: str
     stop: str
+    times_visit: int = 0
 
 
 class coding_assistance:
 
     def __init__(self):
-
+        with open("test_output.md", "w", encoding="utf-8") as file:
+            pass
+        self.State=State()
         self.MemorySaver = MemorySaver
         t=tools()
+        self.tool=tools()
         self.workflow = StateGraph(State)
 
         self.workflow.add_node("problem_statement_maker",t.problem_statement_maker)
@@ -77,10 +81,10 @@ class coding_assistance:
         self.workflow.add_conditional_edges("print_all_info",t.code_prompt_condition,{"Prompt": "generate_code_fun","Code": "polish_code_fun"})
         self.workflow.add_edge("generate_code_fun","polish_code_fun")
         self.workflow.add_edge("polish_code_fun","review_code_fun")
-        self.workflow.add_conditional_edges("review_code_fun",t.condition_at_review,{"perfect":"test_code_fun","prob_stat + suggestion +code":"improve_code_fun"})
+        self.workflow.add_conditional_edges("review_code_fun",t.condition_at_review,{"perfect":"test_code_fun","prob_stat + suggestion +code":"improve_code_fun","limit_reached":"documentation"})
         self.workflow.add_edge("improve_code_fun","polish_code_fun")
         self.workflow.add_conditional_edges("test_code_fun",t.condition_at_test,{"prob_stat + suggestion +code + failed_test_cases":"improve_code_fun","pass":"documentation"})
-        self.workflow.add_conditional_edges("documentation",t.documentation_condition,{"stop":END,"continue":"orchestrator"})
+        self.workflow.add_conditional_edges("documentation",t.documentation_condition,{"stop":END,"continue":"orchestrator","failed":"review_code_fun"})
         self.workflow.add_conditional_edges(
             "orchestrator",t.assign_workers,["llm_call"]
         )
@@ -100,22 +104,49 @@ class coding_assistance:
         thread_id=chat_request["thread_id"]
         thread={"configurable":{"thread_id":thread_id}}
         request={}
+        res="programming Assistance:\n\n"
         for i in chat_request.keys():
             if(chat_request[i]!="None"):
                 request[i]=chat_request[i]
-
+        event_arr=[]
         if  len(request.keys())==2:
             initial_input=request["initial_input"]
+            
             for event in self.chain.stream({"user_prompt":initial_input},thread,stream_mode="values"):
-                print("")
+                event_arr.append(event)
+            # res+=self.tool.first_output(self.State)
+            res+=event_arr[-1]["problem_statement"]+event_arr[-1]["test_cases"]
 
         elif len(request.keys())==3:
 
             update=request["update"]
             for event in self.chain.stream(None if update.lower() == "yes" or update.lower() == "y" or update.lower() == "ok"  else {"user_prompt":update}, thread, stream_mode="values"):
-                print("")
+                event_arr.append(event)
+            if(update.lower() == "yes" or update.lower() == "y" or update.lower() == "ok"):
+
+                res+=event_arr[-1]["code"]
+            else:
+                res+=event_arr[-1]["problem_statement"]+event_arr[-1]["test_cases"]
 
         else:
-            update=request["documentation"]
-            for event in self.chain.stream(None if update.lower() == "yes" or update.lower() == "y" or update.lower() == "ok"  else {"stop":"stop"}, thread, stream_mode="values"):
-                print("")
+            update = request["documentation"]
+            print(update.lower() in ["yes", "y", "ok"])
+            stream_input = None
+            if update.lower() in ["yes", "y", "ok"]:
+                print("ok")
+                stream_input = {"stop":"continue"}
+                for event in self.chain.stream(None, thread, stream_mode="values"):
+                    event_arr.append(event)
+
+
+                res+=event_arr[-1]["output"]+event_arr[-1]["final_report"]
+
+            elif update.lower() in ["stop", "end", "no"]:
+                stream_input = {"stop": "stop"}
+                return res
+            else:
+                
+                stream_input = {"user_prompt":initial_input,"failed_test_cases": update}
+                for event in self.chain.stream(stream_input, thread, stream_mode="values"):
+                    event_arr.append(event)
+        return res
